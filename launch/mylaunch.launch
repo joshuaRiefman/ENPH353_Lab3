@@ -12,8 +12,8 @@
 
     <node
         pkg="enph353_ros_lab" 
-        type="demo_node.py"
-        name="demo_node"
+        type="robot_brain.py"
+        name="robot_brain"
         output="screen"
     />
 
