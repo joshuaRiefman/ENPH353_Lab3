@@ -215,14 +215,14 @@
   </gazebo>
 
   <!-- Skid Steering Driver -->
-  <!-- <gazebo>
+  <gazebo>
     <plugin name="skid_steer_drive_controller" filename="libgazebo_ros_skid_steer_drive.so">
       <updateRate>100.0</updateRate>
       <robotNamespace>/</robotNamespace>
       <leftFrontJoint>wheel_FL_joint</leftFrontJoint>
       <rightFrontJoint>wheel_FR_joint</rightFrontJoint>
-      <leftRearJoint>wheel_BL_joint</leftRearJoint>
-      <rightRearJoint>wheel_BR_joint</rightRearJoint>
+      <leftRearJoint>wheel_RL_joint</leftRearJoint>
+      <rightRearJoint>wheel_RR_joint</rightRearJoint>
       <wheelSeparation>0.4</wheelSeparation>
       <wheelDiameter>0.4</wheelDiameter>
       <robotBaseFrame>chassis</robotBaseFrame>
@@ -230,7 +230,6 @@
       <topicName>cmd_vel</topicName>
       <broadcastTF>false</broadcastTF>
     </plugin>
-  </gazebo> -->
-
+  </gazebo>
 
 </robot>
