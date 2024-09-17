@@ -9,4 +9,12 @@
     <include file="$(find enph353_ros_lab)/launch/robot.launch">
 	    <arg name="init_pose" value="-x 0.0 -y 0.0 -z 0.0 -R 0.0 -P 0.0 -Y 0.0" />
     </include>
+
+    <node
+        pkg="enph353_ros_lab" 
+        type="demo_node.py"
+        name="demo_node"
+        output="screen"
+    />
+
 </launch>
