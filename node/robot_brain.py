@@ -12,33 +12,22 @@ class NoVisibleRoadException(Exception):
     pass
 
 
-PUBLISH_TOPIC_NAME: str = '/cmd_vel'
-IMAGE_PUB_NAME: str = '/robot/vision'
-UNKNOWN_POSITION: int = -1
-
-ROBOT_SPEED_LINEAR = 0.66
-ROBOT_SPEED_ANGULAR = 5
-
-
-# pts1 = np.array([[50, 50], [390, 50], [50, 390], [390, 390]], dtype=np.float32)
-# pts2 = np.array([[0, 0], [800, 0], [0, 800], [800, 800]], dtype=np.float32)
-# M = cv.getPerspectiveTransform(pts1, pts2)
-
-
-def get_new_position(new_position, prev_position, dt) -> float:
-    velocity = abs(new_position - prev_position)
-    if velocity > 10:
-        velocity = 2 * np.log10(velocity - 9) + 10
-
-    max_change_in_position = velocity * dt
-    center_x = np.clip(new_position, prev_position - max_change_in_position, prev_position + max_change_in_position)
-
-    return float(center_x)
+PUBLISH_TOPIC_NAME: str = '/cmd_vel'    ## Topic to publish move command
+IMAGE_PUB_NAME: str = '/robot/vision'   ## Topic to publish what the robot is seeing
+ROBOT_SPEED_LINEAR = 0.66               ## Linear robot speed
+ROBOT_SPEED_ANGULAR = 5                 ## Angular robot speed
 
 
 def detect_line_center(frame: np.ndarray) -> Tuple[float, int]:
     """
-    
+    Identify the center of a line that is darker than its
+    surroundings in ``frame``. 
+
+    Requires that a line is present.
+
+    @raises NoVisibleRoadException if no line is detectable in ``frame``.
+    @param np.ndarray frame an OpenCV compatible frame as an (n, m, 3) ndarray.
+    @return the index of the line center in ``frame``, and the index from the bottom that it was detected at.
     """
     gray_img = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     height: int = gray_img.shape[1]
@@ -81,11 +70,14 @@ class Brain:
         self._image_pub = rospy.Publisher(IMAGE_PUB_NAME, Image, queue_size=1)
         self._image_sub = rospy.Subscriber("/camera1/image_raw", Image, self._update, queue_size=1)
 
-
     def _update(self, data: np.ndarray):
+        """
+        Update the internal state of the robot, by having the robot react to new visual data.
+        
+        @param data     A sensor_msgs.msg.Image compatible ndarray of raw data from a camera.
+        """
         try:
             cv_image: np.ndarray = self._bridge.imgmsg_to_cv2(data, desired_encoding='passthrough')
-            # cv_image = cv.warpPerspective(raw_cv_image, M, [800, 800])
         except Exception as e:
             rospy.loginfo(e)
             return
@@ -100,7 +92,7 @@ class Brain:
 
         except NoVisibleRoadException:
             # This will cause the robot to just rotate
-            center = height / 2
+            center = height
             row = 0 # Not functional, just for cosmetics
 
         # Compute normalized displacement of line position from center
@@ -122,9 +114,13 @@ class Brain:
             # Reduce speed when not centered nicely
             reduction_factor = max(0, 1 - (3 * np.abs(adjusted_normalized_center)))
             self._move.linear.x = ROBOT_SPEED_LINEAR * reduction_factor
-
+        else:
+            self._move.linear.x = 0
 
     def move(self):
+        """
+        Update the current drive command being provided to the robot, based on the robot's internal state.
+        """
         self._pub.publish(self._move)
         self._rate.sleep()
 
